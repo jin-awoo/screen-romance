@@ -1,13 +1,11 @@
-# Screen Romance
+# The gendered fragility of celebrity relationships
 
-Interactive companion (English / 中文) to *The gendered fragility of celebrity relationships* by Jin Han and Petter Holme
-(Aalto University; Kobe University). Live site: https://jin-awoo.github.io/screen-romance/
+Interactive research website by Jin Han and Petter Holme (Aalto University; Kobe University).
 
-5,389 marriages and unmarried partnerships between actors, 1950–2015. Kaplan–Meier curves are recomputed in the
-browser for the selected unions; hazard ratios are fixed results of the paper's Cox models.
+English-only visualization of 4,526 celebrity relationships begun in 1950–2015, using the corrected March-only cohort. The gendered main analysis includes 4,314 relationships and 2,425 dissolution events. TMDB metadata use the March 2026 cache; relationship outcomes are verified through 18 September 2026.
 
-Data: Wikidata (CC0) and the TMDB API. This product uses the TMDB API but is not endorsed or certified by TMDB.
-Map: Natural Earth via world-atlas (ISC). Charts: d3 (ISC).
+Filters recompute descriptive charts for the selected relationships. Model estimates are fixed results from the revised draft. Fame measures are reference scores constructed from cached TMDB popularity, rather than contemporaneously observed historical fame. Deaths are censored in the survival analyses.
 
-This repository only hosts the built site; it is generated from the (private) research repository by `web/build_site_data.py`.
-Contact: jin.1.han@aalto.fi
+This repository contains the static website: `index.html`, `app.js`, `paper.js`, and `data.js`. No build step is required.
+
+Data: Wikidata (CC0) and the TMDB API. This product uses the TMDB API but is not endorsed or certified by TMDB. Map: Natural Earth via world-atlas (ISC). Charts: D3 (ISC).

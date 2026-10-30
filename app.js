@@ -1,12 +1,12 @@
 /* Screen Romance: interactive companion to "The gendered fragility of celebrity relationships".
-   Data: window.SR_DATA from data.js (built by build_site_data.py). Charts: d3 v7. No model is fitted here:
-   Kaplan-Meier curves are recomputed for the filtered sample, hazard ratios are read from analysis/results. */
+   Data: window.SR_DATA from data.js (built by build_data.py). Charts: d3 v7. No model is fitted here:
+   Kaplan-Meier curves are recomputed for the filtered sample, hazard ratios are read from the revised manuscript reproduction statistics. */
 (() => {
   "use strict";
   const D = window.SR_DATA;
   if (!D || !window.d3) {
     document.body.prepend(Object.assign(document.createElement("p"), {
-      textContent: "The data file (data.js) or the chart library did not load. Rebuild with web/build_site_data.py and reload.",
+      textContent: "The data file (data.js) or the chart library did not load. Rebuild with build_data.py and reload.",
       style: "padding:16px;color:#b00",
     }));
     return;
@@ -14,241 +14,200 @@
 
   // ───────────────────────────── i18n ─────────────────────────────
   const T = {
-    en: {
-      billing: "CS2Nordics 2026 · Computational social science · Wikidata × TMDB",
-      title: "Screen Romance",
-      subtitle: "The gendered fragility of celebrity relationships",
-      authors: "Jin Han · Petter Holme — Aalto University · Kobe University",
-      key_claim: '<span class="her">Her</span> fame is linked to breakup. <span class="him">His</span> is not.',
-      key_her_l: "her fame · HR {hr} [{lo}, {hi}]",
-      key_him_l: "his fame · HR {hr} [{lo}, {hi}], n.s.",
-      key_note: "Change in breakup hazard per +10 percentile points of current fame. Cox model with both partners, fame lagged one year, adjusted for both ages and start decade; 5,000 different-sex unions, 1950–2015.",
-      filters: "Filters", reset: "Reset",
-      f_era: "Start decade", f_rel: "Relationship", f_cty: "Citizenship of either partner", f_cty_ph: "Search countries",
-      rel_all: "All", rel_spouse: "Married", rel_partner: "Unmarried",
-      sample: "Selected unions",
-      st_unions: "Unions", st_people: "People",
-      st_brk: "Broke up", st_dth: "Ended by a partner's death", st_unc: "Partner died, end uncertain", st_tog: "Together at the end of the data",
-      rail_note: "Filters apply to every chart on the page except the fitted models.",
-      s1_eyebrow: "How long they last",
-      s1_title: "Share of couples still together, by years since the union began",
-      s1_lede: "Kaplan–Meier curves for the unions you selected. A partner's death ends the observation instead of counting as a breakup. Hover over the chart to read any year.",
-      split_by: "Compare by",
-      sp_her: "Her fame", sp_his: "His fame", sp_joint: "Joint exposure", sp_kind: "Shared titles", sp_rel: "Relationship", sp_era: "Era",
-      g_high_her: "She is in the more famous half", g_high_his: "He is in the more famous half",
-      g_low: "Less famous half", g_none: "No acting work in the 3 years before",
-      j_high: "Higher joint exposure", j_low: "Lower joint exposure", j_none: "No shared title",
-      k_unscripted: "Only seen together (as themselves)", k_scripted: "Acted together", k_none: "No shared title",
-      rel_spouse_g: "Married", rel_partner_g: "Unmarried partners",
-      era_early: "Began 1950–1989", era_late: "Began 1990–2015",
-      cap_her: "Her fame in the 3 years before the union, as a percentile among actresses with acting work, split at the median ({m}th percentile). Different-sex unions with a dated outcome.",
-      cap_his: "His fame in the 3 years before the union, as a percentile among actors with acting work, split at the median ({m}th percentile). Different-sex unions with a dated outcome.",
-      cap_joint: "Summed popularity of every title both partners appeared in during the 3 years up to the union, split at the median among couples who share one. Talk shows and appearances as themselves count.",
-      cap_kind: "Titles both partners appeared in during the 3 years up to the union. “Acted together” = at least one scripted film or series; “only seen together” = talk shows, award shows or appearances as themselves only.",
-      cap_rel: "Marriages vs. unmarried partnerships as recorded in Wikidata. A partnership that became a marriage is followed as one union.",
-      cap_era: "By the year the union began.",
-      th_group: "Group", th_n: "Unions", th_med: "Median, years", th_s10: "Together at 10 y", th_s20: "at 20 y",
-      km_x: "Years since the union began", km_y: "Still together",
-      not_reached: "not reached", at_year: "Year {t}", at_risk: "{n} still followed",
-      g_median_l: "median years together (Kaplan–Meier), selected different-sex unions",
-      years_unit: "years", outcome_title: "How the {n} selected unions ended",
-      costar_l: "co-starred in a title released in the 3 years before the start year",
-      cross_l: "partners share no citizenship",
-      dose_title: "Breakup within 10 years, by fame before the union",
-      dose_note: "Kaplan–Meier estimate with 95% confidence interval. Quarters are among partners with acting work in the 3 years before the union; groups under 30 unions are not drawn.",
-      dx0: "No work", dx1: "Bottom quarter", dx2: "Second", dx3: "Third", dx4: "Top quarter",
-      her_l: "Her fame", his_l: "His fame", dose_y: "Broke up within 10 years", too_few: "too few unions",
-      s2_eyebrow: "What the models say",
-      s2_title: "Her fame raises the breakup hazard in every specification; his stays near 1",
-      s2_lede: "Hazard ratios from the Cox models in the analysis scripts (q6, q7, q8). They are fixed full-sample results and do not change with the filters. A ratio of 1.08 means an 8% higher breakup hazard per +10 percentile points.",
-      fm_level: "During the union", fm_pre: "Before the union",
-      forest_x: "Hazard ratio per +10 percentile points (log scale)", hr_log: "Hazard ratio (log scale)",
-      cap_level: "Current fame = percentile among actors with acting work in the last 3 years, updated every year and lagged one year; not working is a separate term. Her vs. his coefficient: p {p}.",
-      cap_pre: "Fame in the window before the union began, both partners in one model with both ages and start decade.",
-      row_main: "Main model", row_reltype: "+ relationship type", row_bootstrap: "Cluster bootstrap interval", row_ipw: "Weighted for TMDB matching",
-      row_spouses: "Spouses only", row_partners: "Unmarried partners only", row_early: "Began 1950s–80s", row_late: "Began 1990s–2015",
-      row_both_items: "Recorded on both partners' pages", row_no_presenter: "No presenter-only partner", row_start_ok: "Start year undisputed",
-      row_snapshot: "Single TMDB snapshot", row_us: "At least one US citizen", row_non_us: "No US citizen",
-      row_pct3: "Fame in the 3 years before", row_pct1: "Fame in the year before", row_lead: "Lead film roles only (no popularity)", row_allcred: "Every credit, talk shows included",
-      as_table: "Show as a table", th_spec: "Specification", th_her: "Her HR [95% CI]", th_his: "His HR [95% CI]",
-      no_diff: "no difference", her_short: "Her", his_short: "His",
-      rise_title: "A rise adds nothing once her level is known",
-      rise_note: "Hazard ratio of a rise of at least 30 points within 1, 3 or 5 years. Hollow: the rise alone. Filled: with current fame level, falls, entries and exits in the same model.",
-      rise_alone: "Rise alone", rise_with: "With current level", rise_row: "{who} · {k}-year rise",
-      spot_title: "Seen together, not working together",
-      spot_note: "Titles both partners appeared in during the 3 years up to the union. Cox models with both partners' fame, ages and decade strata (q8).",
-      sp_unscr_exp: "Seen together, per unit of exposure", sp_scr_exp: "Acted together, per unit of exposure",
-      sp_unscr_only: "Only seen together vs. no shared title", sp_scr_any: "Acted together vs. no shared title",
-      s3_eyebrow: "Who pairs with whom",
-      s3_title: "Where the partners come from",
-      s3_lede: "Each circle is a country of citizenship, sized by the number of unions involving it; arcs join the countries of partners who share no citizenship. Press play to step through the years, or click a country to filter the whole page.",
-      play: "Play", pause: "Pause", all_years: "All years", window_start: "Window start", window: "Window", years_n: "{n} years",
-      speed: "Speed", slow: "Slow", standard: "Standard", fast: "Fast", reset_map: "Reset",
-      map_sub: "{n} unions · {c} cross-border", map_node: "Unions involving the country", map_arc: "Couples across borders",
-      hist_title: "Unions by start year and outcome",
-      atlas_caption: "Citizenship from Wikidata. A couple counts as cross-border only if the partners share no citizenship; historical states (e.g. the Soviet Union, West Germany) are drawn at their main successor. Click a bar to move the window.",
-      top_countries: "Countries", top_pairs: "Cross-border pairs",
-tip_click_on: "Click to filter the page by this country", tip_click_off: "Click to remove this filter",
-      s4_eyebrow: "Couples",
-      s4_title: "Two careers, one relationship",
-      s4_lede: "Pick a couple to see both partners' fame, year by year, around their union. The list puts couples whose partners are both well known today first (TMDB popularity); search by name in English or Chinese.",
-      find_couple: "Search a name", find_couple_ph: "Search a name, e.g. Newman or 泰勒",
-      c_count: "{n} couples", show_more: "Show {n} more", no_match: "No couple matches the name and filters.",
-      o_brk: "Broke up", o_dth: "Ended by a partner's death", o_unc: "Partner died, end uncertain", o_tog: "Together at data end",
-      f_type: "Relationship", f_start: "Began", f_end: "Ended", f_dur: "Length", f_joint: "Shared titles, 3 years up to the start",
-      yes: "Yes", no: "No", joint_fmt: "{s} acted · {u} as themselves",
-      dur_fmt: "{y} years", dur_cens: "{y}+ years",
-      fame_note: "Fame = percentile among actors with acting work in the previous 3 years (0 = no acting credits in that window). Shaded: the union.",
-      age_at: "{a} at the start", born: "born {y}", died: "died {y}",
-      other_unions: "Recorded relationships", no_curve: "No TMDB career data for either partner.",
-      began_l: "Began {y}", end_brk: "Broke up {y}", end_dth: "Death {y}", end_unc: "Partner died",
-      same_sex: "Same-sex union: shown here and on the map, not part of the her/his comparisons.",
-      fame_axis: "Fame percentile", wikidata: "Wikidata", tmdb: "TMDB",
-      s5_eyebrow: "About the data", s5_title: "Questions and answers",
-      faq: [
-        ["What is in the data?",
-          "<p>5,389 marriages and unmarried partnerships between two actors that began between 1950 and 2015, taken from Wikidata's spouse and unmarried-partner statements, with both partners' death dates and recorded end causes. Careers come from TMDB: about 9,800 actors and 516,000 credits, linked through Wikidata and IMDb identifiers; 99.5% of identities are verified across sources.</p>"],
-        ["How is fame measured?",
-          "<p>Every acting credit counts, weighted by the title's popularity rank within its medium and decade and by role size (billing order in films, number of episodes in series). Talk shows, news and appearances as oneself are left out of fame (they are counted separately as joint exposure).</p><p>A person's fame in a year is their percentile among all actors with acting work in the same 3-year window. People without acting work in the window get 0 and a separate “not working” flag, so the models never confuse a break in credits with low fame.</p>"],
-        ["Why is a partner's death not a breakup?",
-          "<p>About one in five recorded endings is a partner's death. Counting those as breakups would make long, stable marriages look fragile, so a death simply ends the observation (right-censoring). Unions that are still intact are censored at the end of the data.</p>"],
-        ["What do the curves show, and what do the models show?",
-          "<p>The curves are Kaplan–Meier estimates: the share of unions still together a given number of years after they began, recomputed live for the filters you choose. They describe; they adjust for nothing.</p><p>The hazard ratios come from Cox models with both partners' fame in one model, adjusted for both ages and the start decade, with fame lagged one year. They are fixed full-sample results from the analysis scripts and do not change with the filters.</p>"],
-        ["Does her fame cause breakups?",
-          "<p>We cannot say. The data show an association: we do not observe who left or why. Fame builds on today's TMDB popularity; a measure without popularity (counting lead film roles) shows the same pattern. The association weakens after the tenth year of a union. The sample is notable actors only, with no non-celebrity comparison group.</p>"],
-        ["Where do names and countries come from?",
-          "<p>Names, citizenships and relationship dates are Wikidata's; Chinese names are Wikidata's Chinese labels where one exists. Errors in Wikidata carry over, and a recorded end date can be missing: about a quarter of unions coded “partner died, end uncertain” were probably unrecorded divorces, so those unions are left out of the survival analysis. Corrections are best made on Wikidata itself.</p>"],
-        ["Who made this, and how should it be cited?",
-          "<p>Jin Han (Aalto University) and Petter Holme (Aalto University; Kobe University). Contact: <a href=\"mailto:jin.1.han@aalto.fi\">jin.1.han@aalto.fi</a>. Please cite: Han, J. and Holme, P., <i>The gendered fragility of celebrity relationships</i>, working paper, 2026.</p><p>Data: Wikidata (CC0) and the TMDB API. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>"],
-      ],
-      footer_refs: "Related work: Stuart, Moon & Casciaro (2011) SSRN 1749612 · Jensen & Kim (2015) Organ. Sci. 26(1) · Folke & Rickne (2020) Am. Econ. J. Appl. Econ. 12(1) · Schwartz & Gonalons-Pons (2016) RSF 2(4).",
-      footer_built: "Data built {d} from datasets/v2 and features/features02. This product uses the TMDB API but is not endorsed or certified by TMDB.",
-      dec_label: "{d}s", dec_last: "2010–15",
-    },
-    zh: {
-      billing: "CS2Nordics 2026 · 计算社会科学 · Wikidata × TMDB",
-      title: "银幕情缘",
-      subtitle: "名人关系的性别化脆弱性",
-      authors: "Jin Han · Petter Holme — 阿尔托大学 · 神户大学",
-      key_claim: '<span class="her">她</span>的名气与分手相关，<span class="him">他</span>的不相关。',
-      key_her_l: "她的名气 · 风险比 {hr} [{lo}, {hi}]",
-      key_him_l: "他的名气 · 风险比 {hr} [{lo}, {hi}]，不显著",
-      key_note: "当前名气每高 10 个百分位，分手风险的变化。Cox 模型同时纳入双方名气（滞后一年），并控制双方年龄与开始年代；5,000 段异性关系，1950–2015 年。",
-      filters: "筛选", reset: "重置",
-      f_era: "开始年代", f_rel: "关系类型", f_cty: "任一方的国籍", f_cty_ph: "搜索国家",
-      rel_all: "全部", rel_spouse: "婚姻", rel_partner: "未婚伴侣",
-      sample: "当前样本",
-      st_unions: "段关系", st_people: "人",
-      st_brk: "分手或离婚", st_dth: "因一方去世而结束", st_unc: "一方去世，结束时间不确定", st_tog: "数据截止时仍在一起",
-      rail_note: "筛选作用于本页除模型估计以外的所有图表。",
-      s1_eyebrow: "关系能维持多久",
-      s1_title: "关系开始后，仍在一起的伴侣比例",
-      s1_lede: "按当前筛选计算的 Kaplan–Meier 生存曲线。一方去世视为观察结束（删失），不算作分手。将鼠标移到图上可读取任意年份。",
-      split_by: "比较维度",
-      sp_her: "她的名气", sp_his: "他的名气", sp_joint: "共同曝光", sp_kind: "共同作品", sp_rel: "关系类型", sp_era: "年代",
-      g_high_her: "她属于较有名的一半", g_high_his: "他属于较有名的一半",
-      g_low: "较不有名的一半", g_none: "此前 3 年没有表演作品",
-      j_high: "共同曝光较高", j_low: "共同曝光较低", j_none: "没有共同作品",
-      k_unscripted: "只同框（以本人身份出镜）", k_scripted: "合作演出过", k_none: "没有共同作品",
-      rel_spouse_g: "婚姻", rel_partner_g: "未婚伴侣",
-      era_early: "始于 1950–1989 年", era_late: "始于 1990–2015 年",
-      cap_her: "她在关系开始前 3 年的名气：在有表演作品的女演员中的百分位，以中位数（第 {m} 百分位）分成两半。样本为结局日期明确的异性关系。",
-      cap_his: "他在关系开始前 3 年的名气：在有表演作品的男演员中的百分位，以中位数（第 {m} 百分位）分成两半。样本为结局日期明确的异性关系。",
-      cap_joint: "关系开始前 3 年内双方共同出现的所有作品的热度之和，在有共同作品的伴侣中以中位数分组。脱口秀和以本人身份出镜也计入。",
-      cap_kind: "关系开始前 3 年内双方共同出现的作品。“合作演出过”= 至少一部有剧本的电影或剧集；“只同框”= 仅有脱口秀、颁奖礼或以本人身份出镜。",
-      cap_rel: "Wikidata 记录的婚姻与未婚伴侣关系。先同居后结婚的伴侣按一段关系追踪。",
-      cap_era: "按关系开始的年份。",
-      th_group: "组别", th_n: "关系数", th_med: "中位年数", th_s10: "10 年仍在一起", th_s20: "20 年",
-      km_x: "关系开始后的年数", km_y: "仍在一起",
-      not_reached: "未到达", at_year: "第 {t} 年", at_risk: "仍在观察 {n} 段",
-      g_median_l: "当前所选异性关系维持的中位年数（Kaplan–Meier）",
-      years_unit: "年", outcome_title: "所选 {n} 段关系的结局",
-      costar_l: "开始年份之前 3 年内曾合作演出",
-      cross_l: "双方没有共同国籍",
-      dose_title: "按关系前名气分组：10 年内分手的比例",
-      dose_note: "Kaplan–Meier 估计及 95% 置信区间。四分位在关系前 3 年有表演作品的人中划分；不足 30 段关系的组不画出。",
-      dx0: "无作品", dx1: "最低四分之一", dx2: "第二", dx3: "第三", dx4: "最高四分之一",
-      her_l: "她的名气", his_l: "他的名气", dose_y: "10 年内分手", too_few: "样本过少",
-      s2_eyebrow: "模型结果",
-      s2_title: "在每一种模型设定下，她的名气都提高分手风险；他的名气始终接近 1",
-      s2_lede: "风险比来自分析脚本（q6、q7、q8）中的 Cox 模型，是基于全样本的固定结果，不随筛选变化。风险比 1.08 表示名气每高 10 个百分位，分手风险高 8%。",
-      fm_level: "关系存续期间", fm_pre: "关系开始之前",
-      forest_x: "每 +10 个百分位的风险比（对数刻度）", hr_log: "风险比（对数刻度）",
-      cap_level: "当前名气 = 在最近 3 年有表演作品的演员中的百分位，逐年更新并滞后一年；是否在工作另设变量。她与他系数之差：p {p}。",
-      cap_pre: "关系开始前窗口内的名气；双方名气同在一个模型中，并控制双方年龄与开始年代。",
-      row_main: "主模型", row_reltype: "+ 关系类型", row_bootstrap: "聚类自助法区间", row_ipw: "按 TMDB 匹配加权",
-      row_spouses: "仅婚姻", row_partners: "仅未婚伴侣", row_early: "始于 1950–80 年代", row_late: "始于 1990–2015 年",
-      row_both_items: "双方条目都有记录", row_no_presenter: "排除仅为主持人的一方", row_start_ok: "开始年份无争议",
-      row_snapshot: "单一 TMDB 快照", row_us: "至少一方为美国公民", row_non_us: "双方都不是美国公民",
-      row_pct3: "关系前 3 年的名气", row_pct1: "关系前 1 年的名气", row_lead: "只计主演电影（不含热度）", row_allcred: "计入全部作品（含脱口秀）",
-      as_table: "以表格显示", th_spec: "模型设定", th_her: "她 风险比 [95% CI]", th_his: "他 风险比 [95% CI]",
-      no_diff: "无差异", her_short: "她", his_short: "他",
-      rise_title: "知道她的名气水平后，名气“上升”本身不再有影响",
-      rise_note: "1、3 或 5 年内名气上升至少 30 个百分位的风险比。空心：只放入上升；实心：同时放入当前名气水平、下降、入行和退出。",
-      rise_alone: "只放入上升", rise_with: "加入当前水平", rise_row: "{who} · {k} 年上升",
-      spot_title: "与同框曝光有关，与合作演出无关",
-      spot_note: "关系开始前 3 年内双方共同出现的作品。Cox 模型控制双方名气、年龄，并按年代分层（q8）。",
-      sp_unscr_exp: "同框曝光，每单位", sp_scr_exp: "合作演出曝光，每单位",
-      sp_unscr_only: "只同框 vs 没有共同作品", sp_scr_any: "合作演出过 vs 没有共同作品",
-      s3_eyebrow: "谁与谁结合",
-      s3_title: "伴侣们来自哪里",
-      s3_lede: "每个圆代表一个国籍，大小表示涉及该国的关系数；弧线连接没有共同国籍的伴侣。点击播放可逐年浏览，点击国家可筛选整个页面。",
-      play: "播放", pause: "暂停", all_years: "全部年份", window_start: "窗口起点", window: "时间窗", years_n: "{n} 年",
-      speed: "速度", slow: "慢", standard: "标准", fast: "快", reset_map: "重置",
-      map_sub: "{n} 段关系 · {c} 段跨国", map_node: "涉及该国的关系数", map_arc: "跨国伴侣",
-      hist_title: "按开始年份与结局统计的关系数",
-      atlas_caption: "国籍来自 Wikidata。只有双方没有任何共同国籍时才算跨国伴侣；历史国家（如苏联、西德）画在其主要继承国的位置。点击柱子可移动时间窗。",
-      top_countries: "国家", top_pairs: "跨国组合",
-tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取消该筛选",
-      s4_eyebrow: "个案",
-      s4_title: "两段事业，一段关系",
-      s4_lede: "选择一对伴侣，查看两人在关系前后逐年的名气。列表把双方今天都较知名的伴侣排在前面（按 TMDB 热度），可用中英文姓名搜索。",
-      find_couple: "搜索姓名", find_couple_ph: "搜索姓名，如 Newman 或 泰勒",
-      c_count: "{n} 对", show_more: "再显示 {n} 对", no_match: "没有符合姓名和筛选条件的伴侣。",
-      o_brk: "分手/离婚", o_dth: "因一方去世结束", o_unc: "一方去世，结束时间不确定", o_tog: "数据截止时仍在一起",
-      f_type: "关系类型", f_start: "开始", f_end: "结束", f_dur: "持续", f_joint: "开始前 3 年至开始当年的共同作品",
-      yes: "是", no: "否", joint_fmt: "{s} 部剧本作品 · {u} 次本人出镜",
-      dur_fmt: "{y} 年", dur_cens: "{y} 年以上",
-      fame_note: "名气 = 在前 3 年有表演作品的演员中的百分位（该窗口内没有表演作品记为 0）。阴影：关系存续期。",
-      age_at: "开始时 {a} 岁", born: "生于 {y}", died: "卒于 {y}",
-      other_unions: "记录在案的关系", no_curve: "双方都没有 TMDB 职业数据。",
-      began_l: "{y} 开始", end_brk: "{y} 分手", end_dth: "{y} 去世", end_unc: "一方去世",
-      same_sex: "同性关系：显示在这里和地图上，但不参与她/他的比较。",
-      fame_axis: "名气百分位", wikidata: "Wikidata", tmdb: "TMDB",
-      s5_eyebrow: "关于数据", s5_title: "问与答",
-      faq: [
-        ["数据包含什么？",
-          "<p>5,389 段两位演员之间的婚姻和未婚伴侣关系，开始于 1950–2015 年，来自 Wikidata 的配偶与伴侣记录，并附有双方的死亡日期和记录在案的结束原因。职业数据来自 TMDB：约 9,800 位演员、51.6 万条演出记录，通过 Wikidata 与 IMDb 标识符关联；99.5% 的身份经多个来源核实。</p>"],
-        ["名气如何衡量？",
-          "<p>每一条表演作品都计入，按作品在同媒介、同年代中的热度排名以及角色大小（电影的署名顺序、剧集的集数）加权。脱口秀、新闻和以本人身份出镜不计入名气（另作为“共同曝光”统计）。</p><p>某人某年的名气，是其在同一 3 年窗口内所有有表演作品的演员中的百分位。窗口内没有表演作品的人记为 0，并另设“未在工作”标记，因此模型不会把作品空档误当成名气低。</p>"],
-        ["为什么一方去世不算分手？",
-          "<p>记录在案的关系结束中，约五分之一是一方去世。若把这些算作分手，长久稳定的婚姻会显得脆弱，因此去世只表示观察结束（右删失）。仍然存续的关系在数据截止时删失。</p>"],
-        ["曲线和模型分别说明什么？",
-          "<p>曲线是 Kaplan–Meier 估计：关系开始若干年后仍在一起的比例，会根据你选择的筛选条件实时重新计算。它们只是描述，不做任何调整。</p><p>风险比来自 Cox 模型：双方名气同在一个模型中，控制双方年龄和开始年代，名气滞后一年。它们是分析脚本中的全样本固定结果，不随筛选变化。</p>"],
-        ["是她的名气导致了分手吗？",
-          "<p>无法下此结论。数据显示的是相关：我们看不到是谁离开、为什么离开。名气的计算依赖 TMDB 当前的热度；不使用热度的指标（只计主演电影）显示出同样的模式。这种关联在关系进入第十年后减弱。样本只包括知名演员，没有非名人对照组。</p>"],
-        ["姓名和国籍从哪里来？",
-          "<p>姓名、国籍和关系日期都来自 Wikidata；中文名取自 Wikidata 的中文标签（如有）。Wikidata 中的错误会被带入，关系结束日期也可能缺失：被标为“一方去世，结束时间不确定”的关系中，约四分之一其实可能是未记录的离婚，因此这些关系不进入生存分析。更正最好直接在 Wikidata 上进行。</p>"],
-        ["谁制作了本站？如何引用？",
-          "<p>Jin Han（阿尔托大学）与 Petter Holme（阿尔托大学；神户大学）。联系：<a href=\"mailto:jin.1.han@aalto.fi\">jin.1.han@aalto.fi</a>。引用：Han, J. and Holme, P., <i>The gendered fragility of celebrity relationships</i>, working paper, 2026.</p><p>数据：Wikidata（CC0）与 TMDB API。本产品使用 TMDB API，但未经 TMDB 认可或认证。</p>"],
-      ],
-      footer_refs: "相关文献：Stuart, Moon & Casciaro (2011) SSRN 1749612 · Jensen & Kim (2015) Organ. Sci. 26(1) · Folke & Rickne (2020) Am. Econ. J. Appl. Econ. 12(1) · Schwartz & Gonalons-Pons (2016) RSF 2(4)。",
-      footer_built: "数据于 {d} 由 datasets/v2 与 features/features02 构建。本产品使用 TMDB API，但未经 TMDB 认可或认证。",
-      dec_label: "{d} 年代", dec_last: "2010–15",
-    },
-  };
-
-  let LANG = "en";
-  const langParam = new URLSearchParams(location.search).get("lang");
-  try {
-    if (langParam === "en" || langParam === "zh") throw 0;
-    const saved = localStorage.getItem("sr-lang");
-    if (saved === "en" || saved === "zh") LANG = saved;
-    else if ((navigator.language || "").toLowerCase().startsWith("zh")) LANG = "zh";
-  } catch (e) {
-    if (langParam === "en" || langParam === "zh") LANG = langParam;
-    else if ((navigator.language || "").toLowerCase().startsWith("zh")) LANG = "zh";
+  "en": {
+    "billing": "Computational social science · Wikidata × TMDB",
+    "title": "The gendered fragility of celebrity relationships",
+    "authors": "Jin Han · Petter Holme — Aalto University · Kobe University",
+    "filters": "Filters",
+    "reset": "Reset",
+    "f_era": "Start decade",
+    "f_rel": "Relationship",
+    "f_cty": "Citizenship of either partner",
+    "f_cty_ph": "Search countries",
+    "rel_all": "All",
+    "rel_spouse": "Married",
+    "rel_partner": "Unmarried",
+    "sample": "Selected unions",
+    "st_unions": "Unions",
+    "st_people": "People",
+    "st_brk": "Dissolved",
+    "st_dth": "Death-censored",
+    "st_unc": "Death; end uncertain",
+    "st_tog": "Ongoing",
+    "s1_eyebrow": "Supplementary data explorer",
+    "s1_title": "Relationship survival",
+    "s1_lede": "Descriptive KM estimates; deaths are censored.",
+    "split_by": "Compare by",
+    "sp_her": "Her fame",
+    "sp_his": "His fame",
+    "sp_joint": "Joint exposure",
+    "sp_kind": "Shared titles",
+    "sp_rel": "Relationship",
+    "sp_era": "Era",
+    "g_high_her": "She is in the more famous half",
+    "g_high_his": "He is in the more famous half",
+    "g_low": "Less famous half",
+    "g_none": "No acting work in the 3 years before",
+    "j_high": "Higher joint exposure",
+    "j_low": "Lower joint exposure",
+    "j_none": "No shared title",
+    "k_unscripted": "Other shared credits",
+    "k_scripted": "Both credited in acting roles",
+    "k_none": "No shared title",
+    "rel_spouse_g": "Married",
+    "rel_partner_g": "Unmarried partners",
+    "era_early": "1950–1989",
+    "era_late": "1990–2015",
+    "cap_rel": "Female–male unions with positive follow-up; uncertain endings excluded. Supported premarital spells are merged with marriage.",
+    "cap_era": "Female–male unions with positive follow-up, by start year; uncertain endings excluded.",
+    "th_group": "Group",
+    "th_n": "Unions",
+    "th_med": "Median, years",
+    "th_s10": "S(10 years)",
+    "th_s20": "S(20 years)",
+    "km_x": "Duration (years)",
+    "km_y": "Survival S(t)",
+    "not_reached": "not reached",
+    "at_year": "Year {t}",
+    "at_risk": "{n} still followed",
+    "g_median_l": "Median KM survival in selected female–male unions",
+    "years_unit": "years",
+    "outcome_title": "How the {n} selected unions ended",
+    "costar_l": "Shared credit before start (3 yr)",
+    "cross_l": "No shared citizenship, among unions with citizenship recorded on both sides",
+    "dx0": "No work",
+    "dx1": "Bottom quarter",
+    "dx2": "Second",
+    "dx3": "Third",
+    "dx4": "Top quarter",
+    "her_l": "Her fame",
+    "his_l": "His fame",
+    "too_few": "too few unions",
+    "s2_eyebrow": "What the models say",
+    "fm_level": "During the union",
+    "fm_pre": "Before the union",
+    "forest_x": "Hazard ratio per +10 percentile points (log scale)",
+    "hr_log": "Hazard ratio (log scale)",
+    "row_main": "Main model",
+    "row_reltype": "+ relationship type",
+    "row_bootstrap": "Cluster bootstrap interval",
+    "row_ipw": "Weighted for TMDB matching",
+    "row_spouses": "Spouses only",
+    "row_partners": "Unmarried partners only",
+    "row_early": "Began 1950s–80s",
+    "row_late": "Began 1990s–2015",
+    "row_both_items": "Recorded on both partners' pages",
+    "row_no_presenter": "No presenter-only partner",
+    "row_start_ok": "Start year undisputed",
+    "row_snapshot": "Single TMDB snapshot",
+    "row_us": "At least one US citizen",
+    "row_non_us": "No US citizen",
+    "row_pct3": "Fame in the 3 years before",
+    "row_pct1": "Fame in the year before",
+    "row_lead": "Lead film roles only (no popularity)",
+    "row_allcred": "Every credit, talk shows included",
+    "as_table": "Show as a table",
+    "th_spec": "Window",
+    "th_her": "Female HR [95% CI]",
+    "th_his": "Male HR [95% CI]",
+    "no_diff": "no difference",
+    "her_short": "Her",
+    "his_short": "His",
+    "rise_row": "{who} · {k}-year rise",
+    "sp_unscr_exp": "Seen together, per unit of exposure",
+    "sp_scr_exp": "Acted together, per unit of exposure",
+    "sp_unscr_only": "Only seen together vs. no shared title",
+    "sp_scr_any": "Acted together vs. no shared title",
+    "s3_eyebrow": "Supplementary cohort description",
+    "s3_title": "Partner citizenships",
+    "s3_lede": "Circles count unions involving each citizenship; multiple citizenships can count more than once. Arcs link partners with no shared citizenship.",
+    "play": "Play",
+    "pause": "Pause",
+    "all_years": "All years",
+    "window_start": "Window start",
+    "window": "Window",
+    "years_n": "{n} years",
+    "speed": "Speed",
+    "slow": "Slow",
+    "standard": "Standard",
+    "fast": "Fast",
+    "reset_map": "Reset",
+    "map_sub": "{n} unions · {c} cross-border",
+    "map_node": "Unions",
+    "map_arc": "Cross-national pairs",
+    "hist_title": "Starts and outcomes",
+    "atlas_caption": "Wikidata citizenships; historical states map to successors. Cross-national shares exclude missing citizenship.",
+    "top_countries": "Countries",
+    "top_pairs": "Cross-border pairs",
+    "tip_click_on": "Click to filter the page by this country",
+    "tip_click_off": "Click to remove this filter",
+    "s4_eyebrow": "Supplementary individual records",
+    "s4_title": "Careers and relationships",
+    "s4_lede": "Annual fame reference scores. Couples are listed by cached TMDB popularity.",
+    "find_couple": "Search a name",
+    "find_couple_ph": "Search a name, e.g. Newman",
+    "c_count": "{n} couples",
+    "show_more": "Show {n} more",
+    "no_match": "No couple matches the name and filters.",
+    "o_brk": "Broke up",
+    "o_dth": "Death-censored",
+    "o_unc": "Death; end uncertain",
+    "o_tog": "Ongoing",
+    "f_type": "Relationship",
+    "f_start": "Began",
+    "f_end": "Observation endpoint",
+    "f_dur": "Length",
+    "f_joint": "Shared credits: start −3 through start year",
+    "yes": "Yes",
+    "no": "No",
+    "joint_fmt": "{s} both acting · {u} other shared credits",
+    "dur_fmt": "{y} years",
+    "dur_cens": "{y}+ years",
+    "fame_note": "Scores appear after the measurement year ends; missing years remain blank. Shading marks the observed relationship period.",
+    "age_at": "~{a} at start",
+    "born": "born {y}",
+    "died": "died {y}",
+    "other_unions": "Recorded relationships",
+    "no_curve": "No TMDB career data for either partner.",
+    "began_l": "Began {y}",
+    "end_brk": "Broke up {y}",
+    "end_dth": "Death {y}",
+    "end_unc": "Partner died",
+    "same_sex": "Outside the female–male classification: retained for descriptive browsing, excluded from the gendered main analyses.",
+    "fame_axis": "Annual fame score",
+    "wikidata": "Wikidata",
+    "tmdb": "TMDB",
+    "footer_built": "TMDB cache: March 2026 · Outcomes: 18 September 2026 · Wikidata × TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.",
+    "dec_label": "{d}s",
+    "dec_last": "2010–15",
+    "key_claim": "Shared visibility, the starting fame gap, and fame change are associated with dissolution.",
+    "key_her_l": "Female three-year rise · HR {hr} [{lo}, {hi}]",
+    "key_him_l": "Male three-year rise · HR {hr} [{lo}, {hi}]",
+    "key_note": "Three-year rise model · n = 4,314 · 95% CI. Female–male difference not significant (p = 0.086).",
+    "st_unf": "Marriage transition",
+    "o_unf": "Marriage transition; no subsequent follow-up",
+    "end_unf": "{y}: follow-up ends at marriage transition",
+    "sp_dom": "Fame groups",
+    "sp_low": "Low total fame",
+    "sp_high": "High total fame",
+    "sp_earlyhigh": "High fame, 1950–1989",
+    "sp_latehigh": "High fame, 1990–2015",
+    "sp_shared1": "Exposure, 1 yr",
+    "sp_shared2": "Exposure, 2 yr",
+    "sp_shared3": "Exposure, 3 yr",
+    "cap_dom": "One-year fame score; ahead: ≥20 points, similar: <20. Female–male unions with positive follow-up; uncertain endings excluded.",
+    "cap_low": "One-year fame groups; total fame below the main-sample median.",
+    "cap_high": "One-year fame groups; total fame at or above the main-sample median.",
+    "cap_earlyhigh": "High total fame, 1950–1989; one-year fame groups.",
+    "cap_latehigh": "High total fame, 1990–2015; one-year fame groups.",
+    "cap_shared1": "Exposure: start −1 years through start +6 months; split at the main-sample exposure median.",
+    "cap_shared2": "Exposure: start −2 years through start +6 months; split at the main-sample exposure median.",
+    "cap_shared3": "Exposure: start −3 years through start +6 months; split at the main-sample exposure median."
   }
+};
+  Object.assign(T.en, window.SR_PAPER.copy.en);
+
+  const LANG = "en";
   function t(key, vars) {
     let s = T[LANG][key];
     if (s === undefined) s = T.en[key];
@@ -272,19 +231,18 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) e.append(kid.nodeType ? kid : document.createTextNode(kid));
     return e;
   }
-  const locale = () => (LANG === "zh" ? "zh-CN" : "en-US");
+  const locale = () => "en-US";
   const fmtN = (x) => new Intl.NumberFormat(locale()).format(x);
   const fmtP = (x, d = 0) => (x * 100).toFixed(d) + "%";
   const r2 = (x) => (Math.round(x * 100 + 1e-7) / 100).toFixed(2);
   const fmtYrs = (x) => (x === null ? t("not_reached") : x.toFixed(1));
   const fmtPv = (p) => (p === null || p === undefined ? "" : p < 0.001 ? "< 0.001" : "= " + p.toFixed(p < 0.01 ? 3 : 2));
   const REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let displayNames = null, displayNamesLang = null;
+  let displayNames = null;
   function regionName(a2) {
     try {
-      if (displayNamesLang !== LANG) {
-        displayNames = new Intl.DisplayNames([LANG === "zh" ? "zh-Hans" : "en"], { type: "region" });
-        displayNamesLang = LANG;
+      if (!displayNames) {
+        displayNames = new Intl.DisplayNames(["en"], { type: "region" });
       }
       return displayNames.of(a2) || a2;
     } catch (e) {
@@ -336,32 +294,34 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     for (const c of D.cols) u[c] = r[CI[c]];
     u.fi = u.fem === 0 ? u.a : u.fem === 1 ? u.b : -1;
     u.mi = u.fem === 0 ? u.b : u.fem === 1 ? u.a : -1;
-    u.sy = Math.floor(u.start);
     u.dec = Math.min(2010, Math.floor(u.sy / 10) * 10);
-    u.out = u.et === 0 ? "brk" : u.et === 2 ? "dth" : u.et === 3 ? "unc" : "tog";
+    u.out = u.et === 0 ? "brk" : u.et === 2 ? "dth" : u.et === 3 ? "unc" : u.et === 4 ? "unf" : "tog";
     const ca = P[u.a].c, cb = P[u.b].c;
-    const shared = ca.find((c) => cb.includes(c));
+    const qa = P[u.a].cq, qb = P[u.b].cq;
+    const common = qa.some(q => qb.includes(q));
+    const shared = common ? ca.find(c => cb.includes(c)) : null;
     u.ca = shared || ca[0] || null;
     u.cb = shared || cb[0] || null;
-    u.cross = !!(u.ca && u.cb && u.ca !== u.cb);
+    u.citKnown = qa.length > 0 && qb.length > 0;
+    u.cross = u.citKnown && !common;
     u.cset = new Set([...ca, ...cb]);
     u.score = Math.sqrt((P[u.a].pop + 0.1) * (P[u.b].pop + 0.1)); // both partners known today: geometric mean of TMDB popularity
-    u.search = norm([P[u.a].n, P[u.a].z, P[u.b].n, P[u.b].z].filter(Boolean).join(" | "));
+    u.search = norm([P[u.a].n, P[u.b].n].join(" | "));
     P[u.a].us.push(i);
     P[u.b].us.push(i);
     return u;
   });
   for (const p of P) p.us.sort((a, b) => U[a].start - U[b].start);
   const ORDER = U.map((u) => u.i).sort((a, b) => U[b].score - U[a].score);
-  const pname = (i) => (LANG === "zh" && P[i].z ? P[i].z : P[i].n);
-  const OUT_KEYS = ["brk", "dth", "unc", "tog"];
-  const OUT_COL = { brk: "--o-brk", dth: "--o-dth", unc: "--o-unc", tog: "--o-tog" };
+  const pname = (i) => P[i].n;
+  const OUT_KEYS = ["brk", "dth", "unc", "tog", "unf"];
+  const OUT_COL = { brk: "--o-brk", dth: "--o-dth", unc: "--o-unc", tog: "--o-tog", unf: "--none" };
   const DECADES = [1950, 1960, 1970, 1980, 1990, 2000, 2010];
   const CTY_COUNT = new Map();
   for (const u of U) for (const c of u.cset) CTY_COUNT.set(c, (CTY_COUNT.get(c) || 0) + 1);
 
   // ───────────────────────────── state ─────────────────────────────
-  const S = { dec: new Set(), rel: "all", cty: new Set(), ctyQ: "", split: "her", forest: "level",
+  const S = { dec: new Set(), rel: "all", cty: new Set(), ctyQ: "", split: "dom", forest: "level",
     win: 10, pos: null, playing: false, speed: "std", q: "", limit: 60, couple: null };
   function pass(u) {
     if (S.dec.size && !S.dec.has(u.dec)) return false;
@@ -451,7 +411,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
   function renderRailStats() {
     const rows = U.filter(pass);
     const people = new Set();
-    const cnt = { brk: 0, dth: 0, unc: 0, tog: 0 };
+    const cnt = Object.fromEntries(OUT_KEYS.map(k => [k, 0]));
     for (const u of rows) { people.add(u.a); people.add(u.b); cnt[u.out]++; }
     const n = rows.length || 1;
     const box = $("#rail-stats");
@@ -464,21 +424,22 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
   }
 
   // ───────────────────────────── survival ─────────────────────────────
+  const dominanceGroups = [
+    {v:0,k:'dom_m',c:'--him',w:2.75},{v:1,k:'dom_f',c:'--her',w:2.75},{v:2,k:'dom_e',c:'--ref',w:2}];
+  const exposureGroups = [{v:1,k:'lower_exp',c:'--ref',w:2},{v:2,k:'higher_exp',c:'--vis',w:2.75}];
   const SPLITS = {
-    her: { get: (u) => u.hg, cap: "cap_her", groups: [
-      { v: 2, k: "g_high_her", c: "--her", w: 2.75 }, { v: 1, k: "g_low", c: "--ref", w: 2 }, { v: 0, k: "g_none", c: "--none", w: 2 }] },
-    his: { get: (u) => u.mg, cap: "cap_his", groups: [
-      { v: 2, k: "g_high_his", c: "--him", w: 2.75 }, { v: 1, k: "g_low", c: "--ref", w: 2 }, { v: 0, k: "g_none", c: "--none", w: 2 }] },
-    joint: { get: (u) => u.jg, cap: "cap_joint", groups: [
-      { v: 2, k: "j_high", c: "--vis", w: 2.75 }, { v: 1, k: "j_low", c: "--ref", w: 2 }, { v: 0, k: "j_none", c: "--none", w: 2 }] },
-    kind: { get: (u) => u.jk, cap: "cap_kind", groups: [
-      { v: 2, k: "k_unscripted", c: "--vis", w: 2.75 }, { v: 1, k: "k_scripted", c: "--aqua", w: 2.75 }, { v: 0, k: "k_none", c: "--ref", w: 2 }] },
-    rel: { get: (u) => u.rel, cap: "cap_rel", groups: [
-      { v: 0, k: "rel_spouse_g", c: "--vis", w: 2.5 }, { v: 1, k: "rel_partner_g", c: "--aqua", w: 2.5 }] },
-    era: { get: (u) => (u.sy < 1990 ? 0 : 1), cap: "cap_era", groups: [
-      { v: 0, k: "era_early", c: "--aqua", w: 2.5 }, { v: 1, k: "era_late", c: "--vis", w: 2.5 }] },
+    dom: {get:u=>u.dom1,cap:'cap_dom',groups:dominanceGroups},
+    low: {get:u=>u.high1===0?u.dom1:-1,cap:'cap_low',groups:dominanceGroups},
+    high: {get:u=>u.high1===1?u.dom1:-1,cap:'cap_high',groups:dominanceGroups},
+    earlyhigh: {get:u=>u.high1===1&&u.sy<1990?u.dom1:-1,cap:'cap_earlyhigh',groups:dominanceGroups},
+    latehigh: {get:u=>u.high1===1&&u.sy>=1990?u.dom1:-1,cap:'cap_latehigh',groups:dominanceGroups},
+    shared1: {get:u=>u.joint1,cap:'cap_shared1',groups:exposureGroups,shared:true},
+    shared2: {get:u=>u.joint2,cap:'cap_shared2',groups:exposureGroups,shared:true},
+    shared3: {get:u=>u.joint3,cap:'cap_shared3',groups:exposureGroups,shared:true},
+    rel: {get:u=>u.rel,cap:'cap_rel',groups:[{v:0,k:'rel_spouse_g',c:'--vis',w:2.5},{v:1,k:'rel_partner_g',c:'--aqua',w:2.5}]},
+    era: {get:u=>u.sy<1990?0:1,cap:'cap_era',groups:[{v:0,k:'era_early',c:'--aqua',w:2.5},{v:1,k:'era_late',c:'--vis',w:2.5}]},
   };
-  const survBase = () => U.filter((u) => u.sample === 1 && pass(u));
+  const survBase = () => U.filter(u => u.paper_sample === 1 && pass(u));
 
   function renderSplitControl() {
     $("#split").replaceChildren(...Object.keys(SPLITS).map((k) => h("button", { type: "button", "aria-pressed": S.split === k ? "true" : "false",
@@ -490,7 +451,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     const W = widthOf(host), H = Math.round(Math.min(400, Math.max(260, W * 0.52)));
     const M = { t: 26, r: 18, b: 44, l: 46 }, iw = W - M.l - M.r, ih = H - M.t - M.b;
     const sp = SPLITS[S.split];
-    const base = survBase();
+    const base = sp.shared ? U.filter(u => u.eu === 0 && u.dur > 0 && pass(u)) : survBase();
     const groups = sp.groups.map((g) => ({ ...g, f: km(base.filter((u) => sp.get(u) === g.v)) }));
     const x = d3.scaleLinear([0, 40], [0, iw]), y = d3.scaleLinear([0, 1], [ih, 0]);
     const svg = svgIn(host, W, H, t("s1_title"));
@@ -552,19 +513,19 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
           h("td", { text: f && s10 !== null && f.n >= 10 ? fmtP(s10) : "–" }),
           h("td", { text: f && s20 !== null && f.n >= 10 ? fmtP(s20) : "–" }));
       })));
-    const th = D.thresholds;
-    $("#km-caption").textContent = t(sp.cap, { m: Math.round(S.split === "his" ? th.his_median : th.her_median) });
+    $("#km-caption").textContent = t(sp.cap);
   }
 
   function renderGlance() {
     const base = survBase();
     const f = km(base);
     const rows = U.filter(pass);
-    const cnt = { brk: 0, dth: 0, unc: 0, tog: 0 };
+    const cnt = Object.fromEntries(OUT_KEYS.map(k => [k, 0]));
     for (const u of rows) cnt[u.out]++;
     const n = rows.length || 1;
     const costar = base.length ? base.filter((u) => u.costar === 1).length / base.length : 0;
-    const cross = rows.length ? rows.filter((u) => u.cross).length / rows.length : 0;
+    const known = rows.filter(u => u.citKnown);
+    const cross = known.length ? known.filter(u => u.cross).length / known.length : null;
     $("#glance").replaceChildren(
       h("div", null,
         h("div", { class: "hero-v" }, f && f.med !== null ? f.med.toFixed(1) : "–", h("small", { text: t("years_unit") })),
@@ -578,65 +539,16 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
           h("span", { class: "v" }, fmtP(cnt[k] / n), h("span", { class: "p", text: fmtN(cnt[k]) })))))),
       h("div", { class: "mini-stats" },
         h("div", { class: "mini" }, h("div", { class: "v", text: fmtP(costar) }), h("div", { class: "l", text: t("costar_l") })),
-        h("div", { class: "mini" }, h("div", { class: "v", text: fmtP(cross) }), h("div", { class: "l", text: t("cross_l") }))));
+        h("div", { class: "mini" }, h("div", { class: "v", text: cross === null ? "—" : fmtP(cross) }), h("div", { class: "l", text: t("cross_l") }))));
   }
 
-  function renderDose() {
-    const host = $("#dose-chart");
-    const base = survBase();
-    const cats = [0, 1, 2, 3, 4];
-    const series = [{ k: "her_l", get: (u) => u.fq, c: "--her", off: -1 }, { k: "his_l", get: (u) => u.mq, c: "--him", off: 1 }];
-    $("#dose-legend").replaceChildren(...series.map((s) => h("span", null, h("span", { class: "lmark", style: `background:var(${s.c})` }), t(s.k))));
-    const pts = [];
-    for (const s of series) for (const c of cats) {
-      const rows = base.filter((u) => s.get(u) === c);
-      if (rows.length < 30) { pts.push({ s, c, n: rows.length, v: null }); continue; }
-      const f = km(rows), i = kmIdx(f, 10);
-      pts.push({ s, c, n: rows.length, v: 1 - f.S[i], lo: 1 - f.HI[i], hi: 1 - f.LO[i] });
-    }
-    const W = widthOf(host), H = 210, M = { t: 22, r: 12, b: 40, l: 46 }, iw = W - M.l - M.r, ih = H - M.t - M.b;
-    const x = d3.scaleBand(cats, [0, iw]).padding(0.25), y = d3.scaleLinear([0, 0.8], [ih, 0]);
-    const svg = svgIn(host, W, H, t("dose_title"));
-    const g = svg.append("g").attr("transform", `translate(${M.l},${M.t})`);
-    const yt = [0, 0.2, 0.4, 0.6, 0.8];
-    g.append("g").selectAll("line").data(yt).join("line").attr("class", (d) => (d === 0 ? "axis-line" : "grid-line"))
-      .attr("x1", 0).attr("x2", iw).attr("y1", (d) => y(d)).attr("y2", (d) => y(d));
-    g.append("g").selectAll("text").data(yt).join("text").attr("class", "tick").attr("x", -8).attr("y", (d) => y(d)).attr("dy", "0.32em")
-      .attr("text-anchor", "end").text((d) => fmtP(d));
-    g.append("text").attr("class", "axis-title").attr("x", -M.l + 2).attr("y", -10).text(t("dose_y"));
-    g.append("g").selectAll("text").data(cats).join("text").attr("class", "tick").attr("x", (c) => x(c) + x.bandwidth() / 2).attr("y", ih + 18)
-      .attr("text-anchor", "middle").text((c) => t("dx" + c));
-    const off = Math.min(12, x.bandwidth() / 5);
-    const cx = (p) => x(p.c) + x.bandwidth() / 2 + p.s.off * off;
-    for (const s of series) {
-      const ps = pts.filter((p) => p.s === s && p.v !== null && p.c > 0);
-      g.append("path").attr("d", d3.line().x(cx).y((p) => y(p.v))(ps)).style("fill", "none").style("stroke", `var(${s.c})`)
-        .style("stroke-width", 1.5).style("opacity", 0.45);
-    }
-    const drawn = pts.filter((p) => p.v !== null);
-    g.append("g").selectAll("line").data(drawn).join("line").attr("x1", cx).attr("x2", cx).attr("y1", (p) => y(p.lo)).attr("y2", (p) => y(p.hi))
-      .style("stroke", (p) => `var(${p.s.c})`).style("stroke-width", 2).style("stroke-linecap", "round");
-    g.append("g").selectAll("circle").data(drawn).join("circle").attr("cx", cx).attr("cy", (p) => y(p.v)).attr("r", 5)
-      .style("fill", (p) => `var(${p.s.c})`).style("stroke", "var(--surface)").style("stroke-width", 2);
-    g.append("g").selectAll("rect").data(cats).join("rect").attr("x", (c) => x(c) - (x.step() - x.bandwidth()) / 2).attr("width", x.step())
-      .attr("y", 0).attr("height", ih).style("fill", "transparent")
-      .on("pointermove", (e, c) => tipShow(e, (el) => {
-        tipHead(el, t("dx" + c));
-        for (const p of pts.filter((q) => q.c === c)) tipRow(el, p.s.c, p.v === null ? t("too_few") : fmtP(p.v),
-          p.v === null ? t(p.s.k) : `${t(p.s.k)} [${fmtP(p.lo)}, ${fmtP(p.hi)}] · n ${fmtN(p.n)}`);
-      }))
-      .on("pointerleave", tipHide);
-  }
-
-  // ───────────────────────────── models ─────────────────────────────
   function renderKey() {
-    const m = D.models.level[0];
-    $("#key-claim").innerHTML = t("key_claim");
-    const pc = (hr) => { const v = Math.round((hr - 1) * 100); return (v >= 0 ? "+" : "−") + Math.abs(v) + "%"; };
-    $("#key-her").textContent = pc(m.her.hr);
-    $("#key-him").textContent = pc(m.his.hr);
-    $("#key-her-l").textContent = t("key_her_l", { hr: r2(m.her.hr), lo: r2(m.her.lo), hi: r2(m.her.hi) });
-    $("#key-him-l").textContent = t("key_him_l", { hr: r2(m.his.hr), lo: r2(m.his.lo), hi: r2(m.his.hi) });
+    const a = D.paper.dynamics.sweep['3'].terms;
+    const pc = hr => `${hr>=1?'+':'−'}${Math.round(Math.abs(hr-1)*100)}%`;
+    $('#key-claim').textContent = t('key_claim');
+    $('#key-her').textContent = pc(a.fris3.HR); $('#key-him').textContent = pc(a.mris3.HR);
+    $('#key-her-l').textContent = t('key_her_l',{hr:r2(a.fris3.HR),lo:r2(a.fris3.lo),hi:r2(a.fris3.hi)});
+    $('#key-him-l').textContent = t('key_him_l',{hr:r2(a.mris3.HR),lo:r2(a.mris3.lo),hi:r2(a.mris3.hi)});
   }
 
   function forestAxis(g, x, ticks, y0, label) {
@@ -652,52 +564,6 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
       if (ts.length <= maxN) return ts;
     }
     return [lo, 1, hi];
-  }
-
-  function renderForestMode() {
-    $("#forest-mode").replaceChildren(...["level", "pre"].map((k) => h("button", { type: "button", "aria-pressed": S.forest === k ? "true" : "false",
-      text: t("fm_" + k), onclick: () => { S.forest = k; renderForestMode(); renderForest(); } })));
-  }
-  function renderForest() {
-    const rows = S.forest === "level" ? D.models.level : D.models.pre;
-    const host = $("#forest");
-    $("#forest-legend").replaceChildren(h("span", null, h("span", { class: "lmark", style: "background:var(--her)" }), t("her_l")),
-      h("span", null, h("span", { class: "lmark", style: "background:var(--him)" }), t("his_l")));
-    const W = widthOf(host), narrow = W < 540, LW = narrow ? Math.round(W * 0.42) : 230, rowH = 30, M = { t: 6, b: 44, r: 14 };
-    const H = M.t + rows.length * rowH + M.b, y0 = rows.length * rowH;
-    const lo = d3.min(rows, (r) => Math.min(r.her.lo, r.his.lo)), hi = d3.max(rows, (r) => Math.max(r.her.hi, r.his.hi));
-    const x = d3.scaleLog([Math.min(lo, 0.99) * 0.997, Math.max(hi, 1.01) * 1.003], [LW, W - M.r]);
-    const svg = svgIn(host, W, H, t("s2_title"));
-    const g = svg.append("g").attr("transform", `translate(0,${M.t})`);
-    forestAxis(g, x, logTicks(x.domain()[0], x.domain()[1], narrow ? 4 : 8), y0, t("forest_x"));
-    rows.forEach((r, i) => {
-      const yc = i * rowH + rowH / 2;
-      const row = g.append("g");
-      if (i % 2 === 0) row.append("rect").attr("x", 0).attr("y", yc - rowH / 2).attr("width", W).attr("height", rowH).style("fill", "var(--surface-2)");
-      row.append("text").attr("class", "row-label" + (i === 0 ? " strong" : "")).attr("x", LW - 12).attr("y", yc).attr("dy", "0.32em")
-        .attr("text-anchor", "end").style("font-size", narrow ? "11px" : null).text(t("row_" + r.key));
-      for (const [who, c, dy] of [["her", "--her", -5], ["his", "--him", 5]]) {
-        const d = r[who];
-        row.append("line").attr("x1", x(d.lo)).attr("x2", x(d.hi)).attr("y1", yc + dy).attr("y2", yc + dy)
-          .style("stroke", `var(${c})`).style("stroke-width", 2).style("stroke-linecap", "round");
-        row.append("circle").attr("cx", x(d.hr)).attr("cy", yc + dy).attr("r", 4.5).style("fill", `var(${c})`)
-          .style("stroke", "var(--surface)").style("stroke-width", 2);
-      }
-      row.append("rect").attr("x", 0).attr("y", yc - rowH / 2).attr("width", W).attr("height", rowH).style("fill", "transparent")
-        .on("pointermove", (e) => tipShow(e, (el) => {
-          tipHead(el, t("row_" + r.key) + (r.her.n ? ` · n ${fmtN(r.her.n)}` : ""));
-          tipRow(el, "--her", r2(r.her.hr), `${t("her_short")} [${r2(r.her.lo)}, ${r2(r.her.hi)}]${r.her.p !== null ? " p " + fmtPv(r.her.p) : ""}`);
-          tipRow(el, "--him", r2(r.his.hr), `${t("his_short")} [${r2(r.his.lo)}, ${r2(r.his.hi)}]${r.his.p !== null ? " p " + fmtPv(r.his.p) : ""}`);
-        }))
-        .on("pointerleave", tipHide);
-    });
-    $("#forest-caption").textContent = S.forest === "level" ? t("cap_level", { p: fmtPv(D.models.wald_level) }) : t("cap_pre");
-    $("#forest-table").replaceChildren(
-      h("thead", null, h("tr", null, ...["th_spec", "th_her", "th_his", "th_n"].map((k) => h("th", { text: k === "th_n" ? "n" : t(k) })))),
-      h("tbody", null, ...rows.map((r) => h("tr", null, h("td", { text: t("row_" + r.key) }),
-        h("td", { text: `${r2(r.her.hr)} [${r2(r.her.lo)}, ${r2(r.her.hi)}]` }),
-        h("td", { text: `${r2(r.his.hr)} [${r2(r.his.lo)}, ${r2(r.his.hi)}]` }),
-        h("td", { text: r.her.n ? fmtN(r.her.n) : "–" })))));
   }
 
   function hrRows(host, rows, domain, label) {
@@ -727,26 +593,8 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
         .on("pointerleave", tipHide);
     });
   }
-  function renderRise() {
-    $("#rise-legend").replaceChildren(
-      h("span", null, h("span", { class: "lmark hollow", style: "border-color:var(--ink-2)" }), t("rise_alone")),
-      h("span", null, h("span", { class: "lmark", style: "background:var(--ink-2)" }), t("rise_with")));
-    const rows = [];
-    for (const r of D.models.rise) for (const [who, c] of [["her", "--her"], ["his", "--him"]]) rows.push({
-      label: t("rise_row", { who: t(who + "_short"), k: r.k }),
-      marks: [{ d: r[who + "_alone"], c, hollow: true, name: t("rise_alone") }, { d: r[who + "_with_level"], c, hollow: false, name: t("rise_with") }],
-    });
-    hrRows($("#rise-chart"), rows, [0.8, 1.45], t("hr_log"));
-  }
-  function renderSpot() {
-    const j = D.models.joint;
-    const rows = [
-      { label: t("sp_unscr_exp"), marks: [{ d: j.unscripted_all, c: "--vis", ci: true }] },
-      { label: t("sp_scr_exp"), marks: [{ d: j.scripted_all, c: "--aqua", ci: true }] },
-      { label: t("sp_unscr_only"), marks: [{ d: j.kind_unscripted_all, c: "--vis", ci: true }] },
-      { label: t("sp_scr_any"), marks: [{ d: j.kind_scripted_all, c: "--aqua", ci: true }] },
-    ];
-    hrRows($("#spot-chart"), rows, [0.75, 2.0], t("hr_log"));
+  function renderPaper() {
+    window.SR_PAPER.render({D,LANG,t,h,$,d3,svgIn,widthOf,kmAt,atRisk,tipShow,tipHead,tipRow,tipNote,tipHide,hrRows});
   }
 
   // ───────────────────────────── atlas ─────────────────────────────
@@ -814,12 +662,12 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     const inWin = win ? rows.filter((u) => u.sy >= win[0] && u.sy <= win[1]) : rows;
     const nodes = new Map(), pairs = new Map();
     for (const u of inWin) {
-      for (const c of new Set([u.ca, u.cb].filter(Boolean))) {
-        const nd = nodes.get(c) || { a2: c, n: 0, x: 0 };
-        nd.n++; if (u.cross) nd.x++;
+      for (const c of u.cset) {
+        const nd = nodes.get(c) || { a2: c, n: 0, x: 0, known: 0 };
+        nd.n++; if (u.cross) nd.x++; if (u.citKnown) nd.known++;
         nodes.set(c, nd);
       }
-      if (u.cross) { const key = [u.ca, u.cb].sort().join("|"); pairs.set(key, (pairs.get(key) || 0) + 1); }
+      if (u.cross && u.ca && u.cb && u.ca !== u.cb) { const key = [u.ca, u.cb].sort().join("|"); pairs.set(key, (pairs.get(key) || 0) + 1); }
     }
     const nodeArr = [...nodes.values()].filter((d) => MAP.pos.has(d.a2)).sort((a, b) => b.n - a.n);
     const pairArr = [...pairs.entries()].map(([k, n]) => { const [a, b] = k.split("|"); return { k, a, b, n }; })
@@ -878,7 +726,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     tipShow(e, (el) => {
       tipHead(el, regionName(d.a2));
       tipRow(el, "--node", fmtN(d.n), t("st_unions"));
-      tipRow(el, "--arc", fmtP(d.x / d.n), t("map_arc"));
+      tipRow(el, "--arc", d.known ? fmtP(d.x / d.known) : "—", t("map_arc"));
       tipNote(el, S.cty.has(d.a2) ? t("tip_click_off") : t("tip_click_on"));
     });
   }
@@ -891,7 +739,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
   function renderHist() {
     const host = $("#hist");
     const rows = U.filter(pass), years = d3.range(1950, 2016), win = winRange();
-    const by = new Map(years.map((y) => [y, { y, brk: 0, dth: 0, unc: 0, tog: 0, n: 0 }]));
+    const by = new Map(years.map((y) => [y, { y, brk: 0, dth: 0, unc: 0, tog: 0, unf: 0, n: 0 }]));
     for (const u of rows) { const b = by.get(u.sy); if (b) { b[u.out]++; b.n++; } }
     const data = [...by.values()];
     $("#hist-legend").replaceChildren(...OUT_KEYS.map((k) => h("span", null, h("span", { class: "sw", style: `background:var(${OUT_COL[k]})` }), t("st_" + k))));
@@ -983,13 +831,15 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
   // ───────────────────────────── couples ─────────────────────────────
   const coupleOf = (u) => (u.fem >= 0 ? [u.fi, u.mi] : [u.a, u.b]);
   const coupleCols = (u) => (u.fem >= 0 ? ["--her", "--him"] : ["--vis", "--aqua"]);
-  const endYear = (u) => Math.floor(u.end);
+  const endYear = (u) => u.ey;
   const yearsText = (u) => (u.out === "tog" ? `${u.sy}–` : `${u.sy}–${endYear(u)}`);
   const relText = (u) => (u.rel === 0 ? t("rel_spouse_g") : t("rel_partner_g"));
   function renderCoupleList() {
     const q = norm(S.q.trim());
     const list = ORDER.filter((i) => pass(U[i]) && (!q || U[i].search.includes(q)));
     $("#c-count").textContent = t("c_count", { n: fmtN(list.length) });
+    if (!list.includes(S.couple)) S.couple = list.length ? list[0] : null;
+    renderCoupleDetail();
     const box = $("#c-list");
     const items = list.slice(0, S.limit).map((i) => {
       const u = U[i], [p, q2] = coupleOf(u), cols = coupleCols(u);
@@ -1006,6 +856,8 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     if (!list.length) box.append(h("div", { class: "empty", text: t("no_match") }));
   }
   function selectCouple(i) {
+    const u = U[i];
+    if (!u || !pass(u) || (S.q && !u.search.includes(norm(S.q.trim())))) return;
     S.couple = i;
     for (const el of document.querySelectorAll("#c-list .citem")) el.setAttribute("aria-current", +el.dataset.i === i ? "true" : "false");
     renderCoupleDetail();
@@ -1017,7 +869,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     const box = $("#c-detail");
     const u = U[S.couple];
     box.replaceChildren();
-    if (!u) return;
+    if (!u) { box.append(h("p",{class:"empty",text:t("no_match")})); return; }
     const [p, q] = coupleOf(u), cols = coupleCols(u);
     const durTxt = u.ev === 1 || u.out !== "tog" ? t("dur_fmt", { y: u.dur.toFixed(1) }) : t("dur_cens", { y: u.dur.toFixed(1) });
     box.append(
@@ -1040,7 +892,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
         pp.b ? t("age_at", { a: u.sy - pp.b }) : null, pp.c.map(regionName).join(", ") || null].filter(Boolean).join(" · ");
       people.append(h("div", { class: "person" },
         h("div", { class: "pn" }, h("span", { class: "dot", style: `background:var(${cols[k]})` }), pname(pi),
-          LANG === "zh" && pp.z ? h("span", { style: "color:var(--muted);font-weight:400;margin-left:6px", text: pp.n }) : null),
+          null),
         h("div", { class: "pm", text: meta }),
         h("div", { class: "links" },
           h("a", { href: `https://www.wikidata.org/wiki/${pp.q}`, target: "_blank", rel: "noopener", text: t("wikidata") }),
@@ -1049,7 +901,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
         h("ul", null, ...pp.us.map((ui) => {
           const o = U[ui], other = o.a === pi ? o.b : o.a;
           const label = `${pname(other)}`;
-          return h("li", null, ui === u.i ? h("span", { class: "cur", text: label }) : h("button", { type: "button", text: label, onclick: () => selectCouple(ui) }),
+          return h("li", null, ui === u.i || !pass(o) || (S.q && !o.search.includes(norm(S.q.trim()))) ? h("span", { class: ui === u.i ? "cur" : "", text: label }) : h("button", { type: "button", text: label, onclick: () => selectCouple(ui) }),
             h("span", { class: "y", text: `${yearsText(o)} · ${t("o_" + o.out)}` }));
         }))));
     });
@@ -1086,7 +938,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     g.append("line").attr("x1", x0).attr("x2", x0).attr("y1", -4).attr("y2", ih).style("stroke", "var(--gold)").style("stroke-width", 1.5);
     g.append("text").attr("class", "mark-label").attr("x", x0 + 4).attr("y", -6).text(t("began_l", { y: u.sy }));
     if (u.out !== "tog") {
-      const lbl = u.out === "brk" ? t("end_brk", { y: endYear(u) }) : u.out === "dth" ? t("end_dth", { y: endYear(u) }) : t("end_unc");
+      const lbl = u.out === "brk" ? t("end_brk", { y: endYear(u) }) : u.out === "dth" ? t("end_dth", { y: endYear(u) }) : u.out === "unf" ? t("end_unf",{y:endYear(u)}) : t("end_unc");
       g.append("line").attr("x1", x1).attr("x2", x1).attr("y1", -4).attr("y2", ih).style("stroke", "var(--ink-2)")
         .style("stroke-width", 1.5);
       const right = x1 > iw - 90;
@@ -1096,7 +948,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     const line = d3.line().defined((d) => d[1] !== null).x((d) => x(d[0])).y((d) => y(d[1]));
     for (const d of ppl) {
       if (!d.f) continue;
-      const data = d.f[1].map((v, k) => [d.f[0] + k + 0.5, v]);
+      const data = d.f[1].map((v, k) => [d.f[0] + k + 1, v]);
       g.append("path").attr("d", line(data)).style("fill", "none").style("stroke", `var(${d.c})`).style("stroke-width", 2.25)
         .style("stroke-linejoin", "round").style("stroke-linecap", "round");
       const single = data.filter((pt, k) => pt[1] !== null && (k === 0 || data[k - 1][1] === null) && (k === data.length - 1 || data[k + 1][1] === null));
@@ -1108,15 +960,15 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     g.append("rect").attr("width", iw).attr("height", ih).style("fill", "transparent").style("cursor", "crosshair")
       .on("pointermove", (e) => {
         const [mx] = d3.pointer(e);
-        const yr = Math.max(y0, Math.min(y1 - 1, Math.floor(x.invert(mx))));
-        const cx = x(yr + 0.5);
+        const yr = Math.max(y0, Math.min(y1 - 1, Math.round(x.invert(mx)) - 1));
+        const cx = x(yr + 1);
         cross.attr("x1", cx).attr("x2", cx).style("opacity", 1);
         const vals = ppl.map((d) => ({ d, v: d.f && yr >= d.f[0] && yr < d.f[0] + d.f[1].length ? d.f[1][yr - d.f[0]] : null }));
         dots.selectAll("circle").data(vals.filter((o) => o.v !== null)).join("circle").attr("cx", cx).attr("cy", (o) => y(o.v)).attr("r", 4)
           .style("fill", (o) => `var(${o.d.c})`).style("stroke", "var(--surface)").style("stroke-width", 2);
         tipShow(e, (el) => {
-          tipHead(el, String(yr));
-          for (const o of vals) tipRow(el, o.d.c, o.v === null ? "–" : String(o.v), pname(o.d.pi));
+          tipHead(el, `${yr} score (available from ${yr+1})`);
+          for (const o of vals) tipRow(el, o.d.c, o.v === null ? "–" : o.v.toFixed(1), pname(o.d.pi));
         });
       })
       .on("pointerleave", () => { cross.style("opacity", 0); dots.selectAll("*").remove(); tipHide(); });
@@ -1124,27 +976,17 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
 
   // ───────────────────────────── page ─────────────────────────────
   function renderStatic() {
-    document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
+    document.documentElement.lang = "en";
     for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
     for (const el of document.querySelectorAll("[data-i18n-ph]")) el.placeholder = t(el.dataset.i18nPh);
-    document.title = LANG === "zh" ? "银幕情缘 · Screen Romance" : "Screen Romance";
-    $("#lang-en").setAttribute("aria-pressed", LANG === "en" ? "true" : "false");
-    $("#lang-zh").setAttribute("aria-pressed", LANG === "zh" ? "true" : "false");
-    $("#faq-list").replaceChildren(...T[LANG].faq.map(([q, a], i) => {
-      const d = h("details", i === 0 ? { open: true } : null, h("summary", { text: q }));
-      const ans = h("div", { class: "ans" });
-      ans.innerHTML = a; // static, author-written copy
-      d.append(ans);
-      return d;
-    }));
-    $("#footer").replaceChildren(h("p", { text: t("footer_refs") }), h("p", { text: t("footer_built", { d: D.built }) }));
+    document.title = t("title");
+    $("#footer").replaceChildren(h("p", { text: t("footer_built") }));
   }
   function update() {
     renderFilters();
     renderRailStats();
     renderSurvival();
     renderGlance();
-    renderDose();
     renderAtlas();
     renderHist();
     S.limit = 60;
@@ -1154,24 +996,13 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     renderStatic();
     renderKey();
     renderSplitControl();
-    renderForestMode();
     renderPlaySelects();
     syncPlayControls();
     update();
-    renderForest();
-    renderRise();
-    renderSpot();
+    renderPaper();
     renderCoupleDetail();
   }
-  function setLang(l) {
-    LANG = l;
-    try { localStorage.setItem("sr-lang", l); } catch (e) { /* storage unavailable: language resets on reload */ }
-    renderAllText();
-  }
-
   // events
-  $("#lang-en").addEventListener("click", () => setLang("en"));
-  $("#lang-zh").addEventListener("click", () => setLang("zh"));
   $("#reset").addEventListener("click", () => { S.dec.clear(); S.rel = "all"; S.cty.clear(); S.ctyQ = ""; $("#f-cty-q").value = ""; update(); });
   $("#f-cty-q").addEventListener("input", (e) => { S.ctyQ = e.target.value; renderCountryList(); });
   $("#cq").addEventListener("input", (e) => { S.q = e.target.value; S.limit = 60; renderCoupleList(); });
@@ -1183,7 +1014,7 @@ tip_click_on: "点击以按该国筛选整个页面", tip_click_off: "点击取�
     rt = setTimeout(() => {
       if (Math.abs(window.innerWidth - lastW) < 2) return;
       lastW = window.innerWidth;
-      renderSurvival(); renderDose(); renderForest(); renderRise(); renderSpot(); renderAtlas(); renderHist();
+      renderSurvival(); renderPaper(); renderAtlas(); renderHist();
       if (S.couple !== null) renderCoupleChart(U[S.couple]);
     }, 150);
   });
